@@ -12,12 +12,12 @@ fib 1 = 1
 fib n = fib (n-1) + fib (n-2)
 
 fibs1 :: [Integer]
-fibs1 = map fib [1..]
+fibs1 = map fib [0..]
 
 -- Exercise 2 -----------------------------------------
 
 fibs2 :: [Integer]
-fibs2 = undefined
+fibs2 = 1:1:zipWith (+) fibs2 (tail fibs2)
 
 -- Exercise 3 -----------------------------------------
 
@@ -29,20 +29,20 @@ instance Show a => Show (Stream a) where
              ++ ",..."
 
 streamToList :: Stream a -> [a]
-streamToList = undefined
+streamToList (Cons a s)= a:streamToList s
 
 -- Exercise 4 -----------------------------------------
 
 instance Functor Stream where
-    fmap = undefined
+    fmap f (Cons a s)= Cons (f a) $ fmap f s
 
 -- Exercise 5 -----------------------------------------
 
 sRepeat :: a -> Stream a
-sRepeat = undefined
+sRepeat a = Cons a $ sRepeat a
 
 sIterate :: (a -> a) -> a -> Stream a
-sIterate = undefined
+sIterate f a = Cons (f a) $ sIterate f (f a)
 
 sInterleave :: Stream a -> Stream a -> Stream a
 sInterleave (Cons _ _) _ = undefined
