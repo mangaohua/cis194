@@ -1,8 +1,9 @@
 {-# OPTIONS_GHC -Wall #-}
+{-# OPTIONS_GHC -fno-warn-missing-methods #-}
+{-# LANGUAGE BangPatterns #-}
 module HW06 where
 
 import Data.List
-import Data.Functor
 
 -- Exercise 1 -----------------------------------------
 
@@ -45,24 +46,27 @@ sIterate :: (a -> a) -> a -> Stream a
 sIterate f a = Cons (f a) $ sIterate f (f a)
 
 sInterleave :: Stream a -> Stream a -> Stream a
-sInterleave (Cons _ _) _ = undefined
+sInterleave (Cons a s) b = Cons a (sInterleave b s)
 
 sTake :: Int -> Stream a -> [a]
-sTake = undefined
+sTake n  = take n . streamToList 
 
 -- Exercise 6 -----------------------------------------
 
 nats :: Stream Integer
-nats = undefined
+nats = sIterate (+1) (-1)
 
 ruler :: Stream Integer
-ruler = undefined
+ruler = foldr1 sInterleave $ map sRepeat [0..]
 
 -- Exercise 7 -----------------------------------------
 
 -- | Implementation of C rand
 rand :: Int -> Stream Int
-rand = undefined
+rand = sIterate f 
+    where
+        f :: Int -> Int 
+        f a =(1103515245 * a + 12345) `mod` 2147483648
 
 -- Exercise 8 -----------------------------------------
 
@@ -75,12 +79,25 @@ minMaxSlow xs = Just (minimum xs, maximum xs)
 
 {- Total Memory in use: ??? MB -}
 minMax :: [Int] -> Maybe (Int, Int)
-minMax = undefined
-
+minMax [] = Nothing
+minMax xs = foldl' f (Just(0,0)) xs
+    where
+        f (Just (!m,!n)) x = Just (if m<x then m else x, if n<x then x else m )
+        f Nothing _ = Nothing
 main :: IO ()
-main = print $ minMaxSlow $ sTake 1000000 $ rand 7666532
+main = print $ minMax $ sTake 1000000 $ rand 7666532
 
 -- Exercise 10 ----------------------------------------
+data Matrix = Matrix {get11::Integer,get12::Integer,get21::Integer,get22::Integer} deriving Show
+
+instance Num Matrix where
+   (Matrix !a1 !b1 !c1 !d1) * (Matrix !a2 !b2 !c2 !d2) = Matrix (a1*a2 + b1*c2) (a1*b2 + b1*d2) (c1*a2 + d1*c2) (c1*b2 + d1*d2) 
+
+powerMatrix::Int->Matrix->Matrix
+powerMatrix 0 _ = Matrix 1 0 0 1
+powerMatrix n m
+    | even n = let a = powerMatrix (div n 2) m in a*a
+    | otherwise = let a = powerMatrix (div (n-1) 2) m in m*a*a
 
 fastFib :: Int -> Integer
-fastFib = undefined
+fastFib n = get12 $ powerMatrix n (Matrix 1 1 1 0)
