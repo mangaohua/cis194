@@ -65,7 +65,9 @@ shuffle vec = shuffle' (V.length vec - 1) vec
 -- Exercise 6 -----------------------------------------
 
 partitionAt :: Ord a => Vector a -> Int -> (Vector a, a, Vector a)
-partitionAt = undefined
+partitionAt v index = (V.filter (<pivot) v , pivot,V.ifilter abvPivot v)
+  where pivot = v ! index
+        abvPivot i a = i/=index && a >= pivot
 
 -- Exercise 7 -----------------------------------------
 
@@ -76,37 +78,64 @@ quicksort (x:xs) = quicksort [ y | y <- xs, y < x ]
                    <> (x : quicksort [ y | y <- xs, y >= x ])
 
 qsort :: Ord a => Vector a -> Vector a
-qsort = undefined
+qsort v | V.length v == 0 = V.empty
+        | otherwise = 
+            qsort (do y<- xs; guard (y<x); return y)
+            <> V.singleton x
+            <> qsort (do y<- xs;guard (y>=x);return y)
+          where x = V.head v; xs = V.tail v
 
 -- Exercise 8 -----------------------------------------
 
 qsortR :: Ord a => Vector a -> Rnd (Vector a)
-qsortR = undefined
+qsortR v | V.length v == 0 = return V.empty
+         | otherwise =
+            do i <- getRandomR (0, V.length v-1)
+               let (left,pivot,right) = partitionAt v i
+               l <- qsortR left
+               r <- qsortR right
+               return (l <> V.singleton pivot <> r)
+          
 
 -- Exercise 9 -----------------------------------------
 
 -- Selection
 select :: Ord a => Int -> Vector a -> Rnd (Maybe a)
-select = undefined
+select index vec | index <0 || index >= n = return Nothing
+                 | otherwise = do
+                   i <- getRandomR (0,n-1)
+                   let (left,pivot,right) = partitionAt vec i 
+                   if V.length left > index then select index left
+                   else if V.length left == index then return (Just pivot)
+                   else select (index-V.length left-1)  right
+                   where n = V.length vec
 
 -- Exercise 10 ----------------------------------------
 
 allCards :: Deck
-allCards = undefined
+allCards = do s <- suits
+              l <- labels
+              return (Card l s)
+
 
 newDeck :: Rnd Deck
-newDeck =  undefined
+newDeck =  shuffle allCards
 
 -- Exercise 11 ----------------------------------------
 
 nextCard :: Deck -> Maybe (Card, Deck)
-nextCard = undefined
+nextCard v | V.length v == 0 = Nothing
+           | otherwise = Just (V.head v, V.tail v)
 
 -- Exercise 12 ----------------------------------------
 
 getCards :: Int -> Deck -> Maybe ([Card], Deck)
-getCards = undefined
-
+getCards n deck | n > V.length deck = Nothing
+                | n == 0 = Just ([],deck)
+                | otherwise = do 
+                  (c,d) <- nextCard deck 
+                  (x,y) <-  getCards (n-1) d
+                  return (c:x,y)
 -- Exercise 13 ----------------------------------------
 
 data State = State { money :: Int, deck :: Deck }
