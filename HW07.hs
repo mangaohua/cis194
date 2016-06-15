@@ -42,20 +42,25 @@ getElts l v = mapM g l
 type Rnd a = Rand StdGen a
 
 randomElt :: Vector a -> Rnd (Maybe a)
-randomElt = undefined
+randomElt v = (v!?) <$> getRandomR (0,length v-1) 
+
 
 -- Exercise 4 -----------------------------------------
 
 randomVec :: Random a => Int -> Rnd (Vector a)
-randomVec = undefined
+randomVec n = V.replicateM n getRandom 
 
 randomVecR :: Random a => Int -> (a, a) -> Rnd (Vector a)
-randomVecR = undefined
+randomVecR n = V.replicateM n . getRandomR 
 
 -- Exercise 5 -----------------------------------------
 
 shuffle :: Vector a -> Rnd (Vector a)
-shuffle = undefined
+shuffle vec = shuffle' (V.length vec - 1) vec
+  where shuffle' n v | n==0 = return v
+                     | otherwise = swapOne n v >>= shuffle' (n-1)
+        swapOne i v =  swap v i <$> getRandomR (0,i)
+        swap v a b = let x=v!a;y=v!b in V.update v (V.fromList [(a,y),(b,x)])
 
 -- Exercise 6 -----------------------------------------
 
